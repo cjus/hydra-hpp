@@ -1,0 +1,23 @@
+{
+  "name": "hydra-hpp",
+  "version": "1.0.0",
+  "description": "Hydra Hot Potato Player (game)",
+  "main": "hpp.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cjus/hydra-hpp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cjus/hydra-hpp/issues"
+  },
+  "homepage": "https://github.com/cjus/hydra-hpp#readme",
+  "dependencies": {
+    "fwsp-hydra": "0.14.3"
+  }
+}
