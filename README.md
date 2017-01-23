@@ -49,4 +49,4 @@ On another shell tab or machine:
 $ node hpp.js Jane
 ```
 
-After a 15 second countdown the game begins and the potato is passed around.  The game ends after another 15 seconds and the player left holding the potato is declared the loser.
+After a 15 second countdown the game begins and the potato is passed around.  The game ends after another 30 seconds and the player left holding the potato is declared the loser.

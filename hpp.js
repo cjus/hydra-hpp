@@ -43,7 +43,7 @@ class HotPotatoPlayer {
 
     hydra.init(this.config.hydra)
       .then(() => hydra.registerService())
-      .then(serviceInfo => {
+      .then(_serviceInfo => {
         console.log(`Starting ${this.config.hydra.serviceName} (v.${this.config.hydra.serviceVersion})`);
         console.log(`Service ID: ${hydra.getInstanceID()}`);
         hydra.on('message', (message) => {
@@ -80,7 +80,7 @@ class HotPotatoPlayer {
     } else if (message.bdy.command === 'gameover') {
       this.gameOver(message.bdy.result);
     } else {
-      console.log(`[${this.playerName}]: recieved hot potato.`);
+      console.log(`[${this.playerName}]: received hot potato.`);
       this.passHotPotato(message);
     }
   }
@@ -104,7 +104,8 @@ class HotPotatoPlayer {
 	* @return {undefined}
 	*/
   startGame() {
-    const gameDelay = 15000; //15 seconds
+    const gameDelay = 15000; //15 seconds in milliseconds
+    const gameLength = 30; // seconds
     let elapsedSeconds = 0;
     let timerID = setInterval(() => {
       process.stdout.clearLine();
@@ -122,7 +123,7 @@ class HotPotatoPlayer {
           typ: 'hotpotato',
           bdy: {
             command: 'hotpotato',
-            expiration: Math.floor(Date.now() / 1000) + 30
+            expiration: Math.floor(Date.now() / 1000) + gameLength
           }
         });
         this.passHotPotato(hotPotatoMessage);
@@ -170,7 +171,7 @@ class HotPotatoPlayer {
         for (let i = 0; i <= instances.length; i++) {
           if (instances[i].instanceID !== hydra.getInstanceID()) {
             hotPotatoMessage.to = `${instances[i].instanceID}@hpp:/`;
-            hotPotatoMessage.from = `${hydra.getInstanceID()}@hpp:/`;
+            hotPotatoMessage.frm = `${hydra.getInstanceID()}@hpp:/`;
             hydra.sendMessage(hotPotatoMessage);
             clearInterval(timerID);
             break;
@@ -179,4 +180,6 @@ class HotPotatoPlayer {
       });
     }, randomWait);
   }
-}(new HotPotatoPlayer()).init();
+}
+
+(new HotPotatoPlayer()).init();
