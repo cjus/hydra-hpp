@@ -4,41 +4,37 @@ Microservices are distributed applications by nature. As such, two key microserv
 
 Hydra is a NodeJS library that was open-sourced at the EmpireNode conference in New York City in late 2016 . Hydra seeks to greatly simplify the building of distributed applications such as microservices.  In this post we'll build a small multiplayer networked game, and in the process learn how Hydra helps facilitate messaging.
 
-After reviewing this article you can watch a video demo and try the code by forking the sample repo or pulling the docker image.
+After reviewing this article you can watch a video demo and try the code by forking the sample repo.
 
 ## Message transports
 
-Distributed applications must rely on a mechanism to deliver messages.  In other words, messages need to be transported from one process to one or many.
-
-Common ways of transporting messages include: HTTP restful APIs, WebSockets, and raw sockets using messaging servers such as MQTT, RabbitMQ, Redis, and many others. We won't delve into which is better than the other. Each is a feasible and proven tool when solving a variety of actual problems.
+Distributed applications must rely on a mechanism to deliver messages.  In other words, messages need to be transported from one process to one or many. Common ways of transporting messages include: HTTP restful APIs, WebSockets, and raw sockets using messaging servers such as MQTT, RabbitMQ, Redis, and many others. We won't delve into which is better than the other. Each is a feasible and proven tool when solving a variety of actual problems.
 
 For now, know that when it comes to messaging there is no shortage of options.
 
-## Restful APIs vs socket messages
+## HTTP Restful APIs vs socket messages
 
-Before we get into the thick of things it's important to take a closer look at a few underlying differences between Restful API's and socket messaging.
+Before we get into the thick of things it's important to take a closer look at a few underlying differences between HTTP and socket messaging.
 
-When an application makes an HTTP call, a message is sent to a server and a response or error is reported back. This is known as a request and response communication model. HTTP returns a response even if the server it's trying to reach does not respond. With sockets we get to choose whether or not to receive confirmation messages.
+When an application makes an HTTP call, a message is sent to a server and a response or error is reported back. This is known as a request and response communication model. HTTP returns a response even if the server it's trying to reach does not respond.
 
-> TODO: investigate differences between http and websockets
+Behind the scenes of an HTTP call you'll find a series of activities such as DNS resolution, followed by a socket connection using TCP/IP handshakes. Thus, what appears to be a simple call is considerably more work under the hood. All of that can amount to a fare amount of overhead if performed for each API call we make. Another disadvantage lies in the verbosity of HTTP headers. Each HTTP call we make is accompanied by headers on both the sending and receiving side. A running joke is that the size of your HTTP headers can exceed the size of your message payload.
 
-HTTP lets us send data payloads using the Post and Put methods so we can send messages inside of HTTP requests. That's just a heavier set way of sending messages.
+Now, yes - there are ways to minimize this overhead, such as long-polling. But those workarounds come at the expense of complicating your application code.
 
-Behind the scenes of an HTTP call you'll find a series of activities such as DNS resolution, a socket connection followed TCP/IP handshakes to ensure a ready state for sending data. Thus, what appears to be a simple call is considerably more work under the hood. And our messages are larger because they're prefixed with HTTP headers.  Now, yes - there are ways to minimize this overhead. You could, for example, batch messages into a single HTTP call at the expense of complicating your application code.
+An alternative approach is to avoid using HTTP based messaging and instead use WebSockets. With WebSockets there is an HTTP call to establish the initial connection, but once established there's very little overhead involved in sending messages. We also save on the cost of opening and closing TCP socket connections since we keep the socket open as we send and receive messages.
 
-A more efficient transport for messaging is a WebSocket connection which doesn't require the opening and closing of socket connections that HTTP requires. Nor does it require that each of our messages include an HTTP header with verbose text fields.
+Then, there are pure TCP/IP socket connections - the stuff that powers WebSockets and HTTP protocols themselves. If you go this route then you're faced with the work of buffering and handling message boundaries. Here you wind up building your own protocol. A more common approach is to use a messaging server which handles that work for you while optionally providing messaging delivery assurances.
 
-Then, there are pure TCP/IP socket connections - the stuff that powers the WebSockets and HTTP protocols themselves. If you go this route then you're faced with the work of buffering and handling message boundaries. Here you wind up building your own protocol. A more common approach is to use a messaging server which handles that work for you while opt providing messaging delivery assurances.
-
-There is a lot more we could discuss in the section, but a key takeaway is that when it comes to messaging, HTTP introduces overhead which you may not need.
+There is a lot more we could discuss in the section, but a key takeaway here is that when it comes to messaging, HTTP introduces overhead which you may not need.
 
 Many NodeJS developers have grown up using HTTP RESTful interfaces and have never really ventured past that. If that's you, there's no shame in that - it's where many of us started! However, here's your chance to explore non-HTTP messaging. If you're an old pro who's used socket-based messaging, then you may be surprised at how much easier the approach we'll discuss here is for connecting microservices.
 
 ## Messages
 
-So how does Hydra assist with messaging? Hydra simplifies sending and receiving messages between distributed applications. With Hydra messaging, you don't have to specify the location of your applications, nor do you need to specify which instance of an application should receive a given message. Hydra's built-in service discover and routing capabilities transparently address those concerns.
+So how does Hydra assist with messaging? Hydra simplifies the sending and receiving messages between distributed applications. With Hydra messaging, you don't have to specify the location of your applications, nor do you need to specify which instance of an application should receive a given message. Hydra's built-in service discovery and routing capabilities transparently address those concerns.
 
-Let's agree that what we mean by `message` is strictly a JavaScript object.
+When using Hydra, a message is simply a plain old JavaScript object.
 
 ```javascript
 let message = {
@@ -57,15 +53,13 @@ We could send that message using Hydra's `sendMessage` function.
 hydra.sendMessage(message);
 ```
 
-Hydra takes care of locating an instance of a microservice called `gameserver` and sending it the message.  While the message shown above is a pure JavaScript object it does seem to have fields for routing and identifying messages. This message format actually has a name, [UMF](https://github.com/cjus/umf) - a universal messaging format. UMF is a simple JavaScript object format that Hydra uses to define routable messages.  
+Hydra takes care of locating an instance of a microservice called `gameserver` and sending it the message.  While the message shown above is a pure JavaScript object it does have fields for routing and identifying messages. This message format actually has a name, [UMF](https://github.com/cjus/umf) - a universal messaging format. UMF is a simple JavaScript object format that Hydra uses to define routable messages.  
 
 UMF messages are designed to be both routable and queuable. But what exactly do we mean by that?
 
 A routable message is one that contains enough information for a program to determine who sent the message and where that message needs to go. We provide that information by supplying `to` and `frm` fields.
 
-A queuable message is one that can be stored for later processing. Useful message fields include the `mid` field which uniquely identifies a message. Other useful fields not shown here include: fields which provide timestamps, priority and how long a message should be considered valid. Our messages are queuable because they contain enough information to allows us to build and manage message queues.
-
-The `to` field contains the name of a destination service.  The `frm` field simply says that this message originated from the player service. The `mid` or message ID field provides an identifier for the message and the `bdy` or body field contains a command to start a new game.
+A queuable message is one that can be stored for later processing. Useful message fields include the `mid` field which uniquely identifies a message. Other useful fields not shown here include: fields which provide timestamps, priority, and how long a message should be considered valid. Our messages are queuable because they contain enough information to allows us to build and manage message queues.
 
 A key benefit for using a documented format, such as UMF, is to enable interoperability between services. With a known message format your services don't need to translate between formats and you won't feel the urge to build a message translation gateway. In my career, I've seen plenty of those.
 
@@ -99,7 +93,7 @@ The player with the potato starts the game using the `startGame` function. When 
 
 #### constructor
 
-We define a configuration object which contains a hydra branch where we add keys for the name of our service, the service version and more importantly the location of our Redis instance. In a more involved application the configuration should be placed in a file and loaded at runtime.
+We define a configuration object which contains a Hydra branch where we add keys for the name of our service, the service version and more importantly the location of our Redis instance. In a more involved application the configuration should be placed in a file and loaded at runtime.
 
 ```javascript
 constructor() {
@@ -306,7 +300,7 @@ You should see information around your running instances.  After the game comple
 
 ```shell
 $ hydra-cli
-hydra-cli version 0.5.1
+hydra-cli version 0.5.2
 Usage: hydra-cli command [parameters]
 See docs at: https://github.com/flywheelsports/hydra-cli
 
@@ -331,6 +325,6 @@ How does the Hydra-cli work? It's just a Node application which uses the Hydra N
 
 ## Summary
 
-In this article we've seen how Hydra and a few methods allowed us to build a distributed multiplayer game using messaging. We saw how sending a message was as simple as using a formatted JavaScript object and the `hydra.sendMessage` function. Using Hydra's underlying service discovery features players where able to find and communicate with one another.
+In this article we've seen how Hydra and a few methods allowed us to build a distributed multiplayer game using messaging. We saw how sending a message was as simple as using a formatted JavaScript object and the `hydra.sendMessage` function. Using Hydra's underlying service discovery features players were able to find and communicate with one another.
 
 If you'd like to learn more about Hydra, see our [last post here on RisingStack](https://community.risingstack.com/tutorial-building-expressjs-based-microservices-using-hydra) or visit the Hydra [Github repo](https://github.com/flywheelsports/fwsp-hydra).

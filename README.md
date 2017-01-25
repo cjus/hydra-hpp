@@ -3,6 +3,15 @@ Hydra Hot Potato Player (game)
 
 A variation on the children's classic game, [Hot Potato](https://en.wikipedia.org/wiki/Hot_potato_(game)). Adopted as a distributed computing example of network messaging using [Hydra](https://github.com/flywheelsports/fwsp-hydra).
 
+## Seeing this work
+
+There are a few ways you can see this project working.
+
+You can:
+
+* watch this [quick video demo]() to see the game running on AWS in docker containers.
+* or continue reading to build and run from the code in this repo.
+
 ## Install
 
 Installation is simple, just npm install to pull the package dependencies.

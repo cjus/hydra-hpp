@@ -1,5 +1,6 @@
-const version = require('./package.json').version;
 const hydra = require('fwsp-hydra');
+const version = require('./package.json').version;
+const config = require('./config/config.json');
 
 class HotPotatoPlayer {
   /**
@@ -7,22 +8,8 @@ class HotPotatoPlayer {
 	* @summary Setup config
 	*/
   constructor() {
-    this.config = {
-      'environment': 'development',
-      'hydra': {
-        'serviceName': 'hpp',
-        'serviceVersion': version,
-        'serviceIP': '',
-        'servicePort': 0,
-        'serviceType': 'game',
-        'serviceDescription': 'Serves as a hot potato player',
-        'redis': {
-          'url': 'redis-11914.c8.us-east-1-4.ec2.cloud.redislabs.com',
-          'port': 11914,
-          'db': 0
-        }
-      }
-    };
+    this.config = config;
+    this.config.hydra.serviceVersion = version;
   }
 
   /**
@@ -168,14 +155,22 @@ class HotPotatoPlayer {
     let randomWait = this.getRandomWait(1000, 2000);
     let timerID = setTimeout(() => {
       hydra.getServicePresence('hpp').then((instances) => {
-        for (let i = 0; i <= instances.length; i++) {
+        let sent = false;
+        for (let i = 0; i < instances.length; i++) {
           if (instances[i].instanceID !== hydra.getInstanceID()) {
             hotPotatoMessage.to = `${instances[i].instanceID}@hpp:/`;
             hotPotatoMessage.frm = `${hydra.getInstanceID()}@hpp:/`;
             hydra.sendMessage(hotPotatoMessage);
             clearInterval(timerID);
+            sent = true;
             break;
           }
+        }
+        if (!sent) {
+          console.log('No other players found. Try adding players first and then starting the player with the hot potato last.');
+          clearInterval(timerID);
+          hydra.shutdown();
+          process.exit(0);
         }
       });
     }, randomWait);
