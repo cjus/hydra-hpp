@@ -9,7 +9,7 @@ There are a few ways you can see this project working.
 
 You can:
 
-* watch this [quick video demo]() to see the game running on AWS in docker containers.
+* watch this [quick video demo](https://youtu.be/p-UV4d2cUKU) to see the game running across three machines on AWS.
 * or continue reading to build and run from the code in this repo.
 
 ## Install

@@ -4,7 +4,7 @@ Microservices are distributed applications by nature. As such, two key microserv
 
 Hydra is a NodeJS library that was open-sourced at the EmpireNode conference in New York City in late 2016 . Hydra seeks to greatly simplify the building of distributed applications such as microservices.  In this post we'll build a small multiplayer networked game, and in the process learn how Hydra helps facilitate messaging.
 
-After reviewing this article you can watch a video demo and try the code by forking the sample repo.
+After reviewing this article you can watch a [video demo](https://youtu.be/p-UV4d2cUKU) and try the code by [forking the sample repo](https://github.com/cjus/hydra-hpp).
 
 ## Message transports
 
@@ -251,7 +251,9 @@ The final code we'll review is the code which actually kicks of the start of the
 
 ## Seeing the game in action
 
-During the development of this article and the sample game I wanted to test it on cloud infrastructure. So I created [this video]() to demonstrate that working. If you'd like to try this yourself, you can also pull the hpp game in a docker container or just fork the github repo.
+During the development of this article and the sample game I wanted to test it on cloud infrastructure. So I created [this video](https://youtu.be/p-UV4d2cUKU) to demonstrate that working. If you'd like to try this yourself, you can also pull the hpp game in a docker container or just fork the [github repo](https://github.com/cjus/hydra-hpp).
+
+Once the game is installed and configured (by updating the `config/config.json` file with the location of your Redis instance) you're then ready to launch distributed players.
 
 You can add a player named Susan by:
 
@@ -290,13 +292,58 @@ redisPort: 11914
 redisDb: 0
 ```
 
+> Don't use the URL above because it would have expire before this article was published. Grab your own free instance by visiting redislabs.com
+
 Next start a few instances of hpp and type:
 
 ```shell
 $ hydra-cli nodes
 ```
 
-You should see information around your running instances.  After the game completes the instances will no longer be visible using hydra-cli.  There are a lot of other things you can do with hydra-cli. Just type hydra-cli without options for a complete list.
+Here's the output from my test on AWS:
+
+```shell
+$ hydra-cli nodes
+[
+  {
+    "serviceName": "hpp",
+    "serviceDescription": "Serves as a hot potato player",
+    "version": "1.0.0",
+    "instanceID": "fae8260fd74d5bd0f76c2d9e2d1d7c50",
+    "updatedOn": "2017-01-26T16:02:17.828Z",
+    "processID": 1541,
+    "ip": "172.31.29.61",
+    "port": 3000,
+    "elapsed": 2
+  },
+  {
+    "serviceName": "hpp",
+    "serviceDescription": "Serves as a hot potato player",
+    "version": "1.0.0",
+    "instanceID": "d65b3f302d374606b20dea7189643156",
+    "updatedOn": "2017-01-26T16:02:17.516Z",
+    "processID": 1600,
+    "ip": "172.31.28.89",
+    "port": 3000,
+    "elapsed": 2
+  },
+  {
+    "serviceName": "hpp",
+    "serviceDescription": "Serves as a hot potato player",
+    "version": "1.0.0",
+    "instanceID": "5b67588a8ef7d5dbd65b551df3926ae4",
+    "updatedOn": "2017-01-26T16:02:15.516Z",
+    "processID": 1628,
+    "ip": "172.31.19.208",
+    "port": 3000,
+    "elapsed": 4
+  }
+]
+```
+
+As you can see there are three instances shown, each with its own instanceID and unique internal IP address.
+
+After the game completes the instances will no longer be visible using hydra-cli.  There are a lot of other things you can do with hydra-cli. Just type hydra-cli without options for a complete list.
 
 ```shell
 $ hydra-cli
