@@ -2,9 +2,7 @@
 
 Microservices are distributed applications by nature. So it's not surprising that two key microservice concerns would be inter-process communication and messaging. Those concerns underpin how distributed applications work together over a network.
 
-Hydra is a NodeJS library that was open-sourced at the EmpireNode conference in New York City in late 2016. Hydra seeks to greatly simplify the building of distributed applications such as microservices. As an NPM package, Hydra has only one external infrastructure dependency - the use of a Redis server. Hydra leverages Redis to coordinate service presence, discoverability and messaging.
-
-> If you're unfamiliar with Redis - stop right here and go visit the [Redis.io site](https://redis.io). After reading the first page, play with the [interactive tutorial](http://try.redis.io/) - that will be more important to your career than this article. But, afterwards, make sure to rejoin us!
+Hydra is a NodeJS library that was open-sourced at the EmpireNode conference in New York City in late 2016. Hydra seeks to greatly simplify the building of distributed applications such as microservices. As an NPM package, Hydra has only one external infrastructure dependency - the use of a [Redis](https://redis.io) server. Hydra leverages Redis to coordinate service presence, discoverability and messaging.
 
 In this post, we'll build a small multiplayer networked game, and in the process learn how Hydra helps facilitate distributed messaging.
 
