@@ -2,39 +2,39 @@
 
 Microservices are distributed applications by nature. So it's not surprising that two key microservice concerns would be inter-process communication and messaging. Those concerns underpin how distributed applications work together over a network.
 
-Hydra is a NodeJS library that was open-sourced at the EmpireNode conference in New York City in late 2016. Hydra seeks to greatly simplify the building of distributed applications such as microservices. As an NPM package, Hydra has only one external infrastructure dependency - the use of a [Redis](https://redis.io) server. Hydra leverages Redis to coordinate service presence, discoverability and messaging.
+[Hydra](https://github.com/flywheelsports/fwsp-hydra) is a NodeJS library that was open-sourced at the EmpireNode conference in New York City in late 2016. The Hydra project seeks to greatly simplify the building of distributed applications such as microservices. As an NPM package, Hydra has only one external infrastructure dependency - the use of a [Redis](https://redis.io) server. Hydra leverages Redis to coordinate service presence, discoverability and messaging.
 
 In this post, we'll build a small multiplayer networked game, and in the process learn how Hydra helps facilitate distributed messaging.
 
 ## Message transports
 
-Microservices consists of distributed applications which often need to communicate with one another across a network. Common message transport methods include HTTP restful APIs, WebSockets, and raw sockets using messaging servers such as MQTT, RabbitMQ, Redis, and many others. We won't delve into which is better than the others. Each is a feasible and proven tool when building distributed non-trivial applications.
+Microservices are distributed applications which often need to communicate with one another across a network. Common message transport methods include HTTP restful APIs, WebSockets, and raw sockets using messaging servers such as MQTT, RabbitMQ, Redis, and many others. We won't delve into which is better than the others. Each is a feasible and proven tool when building non-trivial networked applications.
 
-For now, know that when it comes to messaging there are no shortage of transport options.
+For now, know that when it comes to messaging there are no shortage of message transport options.
 
 ## HTTP Restful APIs vs socket messages
 
-Two of the most common message transport methods are HTTP Restful APIs and socket messaging. It's important to take a closer look at their underlying differences.
+Two of the most common transport methods are HTTP and socket-based messaging. It's useful to briefly consider their underlying differences.
 
-When an application makes an HTTP call, a message is sent to a server and a response or error is reported back. This is known as a request and response communication model. HTTP returns a response even if the server it's trying to reach does not respond.
+When an application makes an HTTP call, a message is sent to a server and a response or error is reported back. This is known as a request and response communication model. HTTP eventually returns a response even if the server it's trying to reach does not respond.
 
-Behind the scenes of an HTTP call, you'll find a series of activities such as DNS resolution, followed by a series of TCP/IP handshakes. Thus, what appears to be a simple call involves considerably more work under the hood. All of that can amount to a good amount of overhead if performed for each message we send. Additionally, the verbosity of HTTP headers increase the burden. Each HTTP call we make is accompanied by headers on both the sending and receiving side. A running joke is that if you're not careful, the size of your HTTP headers can exceed the size of your message payloads.
+Behind the scenes of an HTTP call, you'll find activities such as DNS resolution followed by a series of TCP/IP handshakes. Thus, what appears to be a simple call involves considerably more work under the hood. All of that can amount to a fair amount of overhead for each message we send. Additionally, the verbosity of HTTP headers can further increase the burden as each call is accompanied by headers on both the sending and receiving side. A running joke is that if you're not careful, the size of your HTTP headers can exceed the size of your message payloads. On a more serious note: HTTP APIs are great until they're not.
 
-Now, yes - there are ways to minimize this overhead. But as some point it's important to embrace the right tool for a job. An alternative approach is to avoid using HTTP-based messaging and instead use WebSockets. With WebSockets, an HTTP call is used to establish the initial connection, but once established there is little additional overhead involved. We also save on the cost of opening and closing TCP socket connections since we keep the WebSocket open as we send and receive messages.
+Now, yes - there are ways to minimize this overhead. But at some point it's important to embrace the right tool for a particular job. An alternative approach is to avoid using HTTP-based messaging and instead use a socket approach. With WebSockets, an HTTP call is used to establish the initial connection, but once established there is little additional overhead involved. We also save on the cost of opening and closing TCP socket connections since we keep the WebSocket open as we send and receive messages.
 
-Then, there are raw TCP/IP socket connections - the stuff that underlies the HTTP and WebSocket protocols themselves. If you go this route then you're faced with the work of buffering and handling message boundaries. Here you wind up building your own protocol. A more common approach is to use a messaging server which handles that work for you while optionally providing messaging delivery assurances.
+At the lower end of the spectrum is the raw TCP/IP socket - the stuff underneath the HTTP and WebSocket protocols themselves. It might seem advantageous to go straight to the source, but if you go this route then you're faced with the work of buffering and handling message boundaries. Here you wind up building your own protocol. A more common approach is to use a messaging server which handles that work for you while optionally providing messaging delivery assurances.
 
-There is a lot more we could discuss in the section, but a key takeaway here is that when it comes to messaging, HTTP introduces overhead which you may not need.
+There is a lot more we could discuss in the section, but key takeaways here are that when it comes to messaging, HTTP introduces overhead which you may not need. And there are lots of alternatives to choose from.
 
 ## Hydra Messaging
 
-Hydra supports both HTTP and socket-based messaging. In this article we'll only focus on socket-based messaging, as most developers reading this article will likely be quite familiar with HTTP API based servers using ExpressJS and other frameworks.
+Hydra supports both HTTP and socket-based messaging. However, in this article we'll only focus on socket-based messaging, as most developers reading this will likely be quite familiar with building HTTP API based servers using ExpressJS and other frameworks.
 
-So how does Hydra assist with messaging? Hydra simplifies the sending and receiving of messages between distributed applications. With Hydra messaging, you don't have to specify the location of your applications, nor do you need to specify which instance of an application should receive a given message. Hydra's built-in service discovery and routing capabilities transparently address those concerns.
+So how does Hydra assist with messaging? Hydra offers a half dozen message related calls which are designed to simplify the sending and receiving of messages between distributed applications. With Hydra messaging, you don't have to specify the location of your applications, nor do you need to specify which instance of an application should receive a given message. Hydra's built-in service discovery and routing capabilities transparently address those concerns.
 
 CTT: `Hydra simplifies the sending and receiving of messages between distributed applications. #risingstack #nodejs #microservice #hydra`
 
-Let's have a closer look. When using Hydra, a message is simply a plain old JavaScript object.
+Let's have a closer look. When using Hydra, a message is constructed using a plain old JavaScript object.
 
 ```javascript
 let message = {
@@ -47,17 +47,19 @@ let message = {
 };
 ```
 
-We could send that message using Hydra's `sendMessage` function.
+We could then send that message using Hydra's `sendMessage` function.
 
 ```javascript
 hydra.sendMessage(message);
 ```
 
-Hydra takes care of locating an instance of a microservice called `gameserver` and sending it the message.  While the message shown above is a pure JavaScript object it does have fields for routing and identifying messages. This message format actually has a name, [UMF](https://github.com/cjus/umf) - a universal messaging format. UMF is a simple JavaScript object format that Hydra uses to define routable and queuable messages.  
+Hydra takes care of locating an instance of a microservice called `gameserver` and sending it the message. While the message is a pure JavaScript object it does have a strict structure. The `to`, `frm` and `bdy` fields are required, and you're encouraged to only add your application specific fields to the `bdy` section.
 
-But what exactly do we mean by routable and queuable messages? A routable message is one that contains enough information for a program to determine who sent the message and where that message needs to go. We provide that information by supplying `to` and `frm` fields. A queuable message is one that can be stored for later processing. Useful message fields include the `mid` field which uniquely identifies a message. Other useful fields not shown here include fields which provide a timestamp, priority, and how long a message should be considered valid. Our messages are queuable because they contain enough information to allows us to use, build and manage message queues.
+This message format actually has a name, [UMF](https://github.com/cjus/umf) - universal messaging format. UMF is a simple JavaScript object format that Hydra uses to define routable and queuable messages.  
 
-A key benefit for using a documented format, such as UMF, is to enable interoperability between services. With a known message format your services don't need to translate between formats and you won't feel the urge to build a message translation gateway. In my career, I've seen plenty of those.
+But what exactly do we mean by routable and queuable messages? A routable message is one that contains enough information for a program to determine who sent the message and where that message needs to go. We provide that information by supplying `to` and `frm` fields. A queuable message is one that can be stored for later processing. Useful message fields include the `mid` field which uniquely identifies a message. Other useful fields not shown here include fields which provide a timestamp, priority, and how long a message should be considered valid. So our messages are considered queuable because they contain enough information to allows us to use, build and manage message queues.
+
+A key reason for using a documented format, such as UMF, is to enable interoperability between services. With a known message format your services don't need to translate between formats and you won't feel the urge to build a message translation gateway. In my career, I've seen plenty of those.
 
 ## The hot potato game
 
@@ -67,7 +69,7 @@ CTT: `hpp: A multi-player game using microservices. #risingstack #nodeJS #micros
 
 Our variation will use a timer to denote the end of the game and at that point, the player left holding the potato loses. Simple. Our game will use messages to pass a potato object and won't feature any fancy graphics. Hey, what can I say? I grew up in the days of [Adventure](https://en.m.wikipedia.org/wiki/Colossal_Cave_Adventure).
 
-For the sake of brevity, we're going to look at code fragments, but you can fork the [hydra-hpp repo](https://github.com/cjus/hydra-hpp) if you'd like to see the full source.
+For the sake of brevity, we're going to look at code fragments, but you can view the [hydra-hpp repo](https://github.com/cjus/hydra-hpp) if you'd like to see the full source.
 
 #### High-level code overview
 
@@ -85,9 +87,9 @@ class HotPotatoPlayer {
 }
 ```
 
-In the `constructor` we'll define our game's configuration settings. The `init` member will contain our initialization of Hydra and the definition of a message listener, where arriving messages are dispatched to our `messageHandler` member. In order to create a bit of realism, we use the `getRandomWait` helper function to randomly delay the passing of the hot potato.
+In the `constructor` we'll define our game's configuration settings. The `init` member will contain our initialization of Hydra and the definition of a message listener, where arriving messages are dispatched to our `messageHandler` function. In order to create a bit of realism, we use the `getRandomWait` helper function to randomly delay the passing of the hot potato.
 
-The player with the potato starts the game using the `startGame` function. When another player receives the potato it checks to see if the game timer has expired, if not, then it uses the `passHotPotato` function to send the potato to yet another player. If the game has expired then the `gameOver` function is called which in-turn sends out a broadcast message to all players signaling the end of the game.
+The player with the potato starts the game using the `startGame` function. When a player receives the potato it checks to see if the game timer has expired, if not, then it uses the `passHotPotato` function to send the potato to another player. If the game has expired then the `gameOver` function is called which in-turn sends out a broadcast message to all players signaling the end of the game.
 
 #### constructor
 
@@ -97,7 +99,7 @@ At the top of our hpp.js file, we require a JSON configuration file.
 const config = require('./config/config.json');
 ```
 
-The JSON file contains a Hydra branch where we add keys for the name of our service, the service version and more importantly the location of our Redis instance. In a more involved application, the configuration should be placed in a file and loaded at runtime.
+The JSON file contains a Hydra branch where we add keys for the name of our service, the service version and more importantly the location of our Redis server. In a more involved application, the configuration should be placed in a file and loaded at runtime.
 
 ```javascript
 {
@@ -153,7 +155,7 @@ Service ID: aed30fd14c11dfaa0b88a16f03da0940
 
 The service name (hpp) and version are shown, but the more interesting bit is the service ID. Each instance of a Hydra service is assigned a unique identifier. We'll see how that becomes useful later in this article.
 
-One interesting code fragment I just glossed over is the `hydra.on()` call, where we define a message listener which simply passes received messages to the game's `messageHandler()` function. The Hydra module derives from [NodeJS emitter](https://nodejs.org/api/events.html#events_class_eventemitter) and uses that to emit messages and log events.
+One interesting code fragment I just glossed over is the `hydra.on()` call, where we define a message listener which simply passes received messages to the game's `messageHandler()` function. The Hydra module derives from [NodeJS event emitter](https://nodejs.org/api/events.html#events_class_eventemitter) and uses that to emit messages and log events.
 
 #### messageHandler
 
@@ -206,9 +208,9 @@ In my first implementation of the passHotPotato call I simply took the hotPotato
   }
 ```
 
-One issue with the above implementation is that the player with the hot potato can send the potato to himself. Because Hydra sendMessage uses the `to` field in the message to determine which service should receive the message. Since the `to` field is defined this way `to: 'hpp:/',` then any `hpp` service can receive the message. To resolve this problem we actually need to get a list of players and actually choose which one to send the potato message to.  Earlier we saw how the output of running hpp reveals the service ID. Each running instance of a service receives a unique identifier.  We can take advantage of this fact in order to address a message to a specific instance.  The format for doing this is straightforward: `to: 'aed30fd14c11dfaa0b88a16f03da0940@hpp:/',` - there we simply prepend the ID of the service we're interested in reaching.
+One issue with the above implementation is that the player with the hot potato can send the potato to himself. Because Hydra sendMessage uses the `to` field in the message to determine which service should receive the message. Since the `to` field is defined this way `to: 'hpp:/',` then any `hpp` service can receive the message. To resolve this problem we need to get a list of players and actually choose which one to send the potato message to. Earlier we saw how the output of running hpp reveals the service ID. Each running instance of a service receives a unique identifier, so we can take advantage of this fact in order to address a message to a specific instance.  The format for doing this is straightforward: `to: 'aed30fd14c11dfaa0b88a16f03da0940@hpp:/',` - there we simply prepend the ID of the service we're interested in reaching.
 
-But how do we retrieve the ID for all distributed services? Hydra has a `getServicePresence()` function which finds all instances of a service given a service name. The call returns a promise which resolves to an array of service details. In those details are the instance IDs.  In the code below we simply loop through the array and grab the details for the first service instance which isn't the current one.  Identifying the instance ID for the current running service involves just calling `hyda.getInstanceID`. Too easy, right?
+But how do we retrieve the ID for all distributed services? Hydra has a `getServicePresence()` function which finds all instances of a service given a service name. The call returns a promise which resolves to an array of service details which includes instance IDs.  In the code below we simply loop through the array and grab the details for the first service instance which isn't the current one.  Identifying the instance ID for the current running service involves just calling `hydra.getInstanceID`. Too easy, right?
 
 ```javascript
   passHotPotato(hotPotatoMessage) {
@@ -236,7 +238,7 @@ This section covered Hydra messaging in greater detail. For more information on 
 
 #### startGame
 
-The final code we'll review is the code which actually kicks of the start of the game. Here we create our initial hotPotato message and set the expiration to the current time plus the length of the game.
+The final fragment we'll review is the code which actually kicks of the start of the game. Here we create our initial hotPotato message and set the expiration to the current time plus the length of the game.
 
 ```javascript
 :
@@ -255,8 +257,6 @@ The final code we'll review is the code which actually kicks of the start of the
 
 ## Seeing the game in action
 
-During the development of this article and the sample game, I wanted to test it on cloud infrastructure. So I created [this video](https://youtu.be/p-UV4d2cUKU) to demonstrate that working. If you'd like to try this yourself, you can also pull the hpp game in a docker container or just fork the [github repo](https://github.com/cjus/hydra-hpp).
-
 Once the game is installed and configured (by updating the `config/config.json` file with the location of your Redis instance) you're then ready to launch distributed players.
 
 You can add a player named Susan by:
@@ -265,7 +265,7 @@ You can add a player named Susan by:
 $ node hpp.js Susan
 ```
 
-On another shell tab or machine, you can add another player named Jane.
+In another shell tab or machine, you can add a player named Jane.
 
 ```shell
 $ node hpp.js Jane
@@ -278,6 +278,8 @@ $ node hpp.js John true
 ```
 
 After a 15 second countdown, the game begins and the potato is passed around.  The game ends after another 30 seconds and the player left holding the potato is declared the loser.
+
+During the development of this article and the sample game, I wanted to test it on cloud infrastructure. So I created [this video](https://youtu.be/p-UV4d2cUKU) as a demonstration. If you'd like to try this yourself, you can also fork the [github repo](https://github.com/cjus/hydra-hpp).
 
 ### Listing players using hydra-cli
 
@@ -372,7 +374,7 @@ Commands:
   services [serviceName]       - display list of services
 ```
 
-You might be wondering how the Hydra-cli program works. It's just a Node application which uses the Hydra NPM package to interact with Hydra enabled applications. It's not much different than the hpp application presented in this article. You can review the code on the [Hydra-cli Github repo](https://github.com/flywheelsports/hydra-cli).
+You might be wondering how the Hydra-cli program works. It's just a Node application which uses the Hydra NPM package to interact with Hydra enabled applications. It's not that different than the hpp application presented in this article. You can review the code on the [Hydra-cli Github repo](https://github.com/flywheelsports/hydra-cli).
 
 ## Summary
 
