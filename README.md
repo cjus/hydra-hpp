@@ -38,6 +38,8 @@ Before you start a game, check the config object in the constructor of the hpp.j
 }
 ```
 
+> *Note*: The Redis credentials in the `config/config.json` file are not longer valid. You can visit RedisLabs to create your own free account or simply point to a local Redis server or one you have access to.
+
 You can add a player to the game by:
 
 ```shell
