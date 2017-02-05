@@ -53,7 +53,7 @@ We could send that message using Hydra's `sendMessage` function.
 hydra.sendMessage(message);
 ```
 
-Hydra takes care of locating an instance of a microservice called `gameserver` and delivering the message. While the message is a pure JavaScript object it does have a strict structure. The `to`, `frm` and `bdy` fields are required, and you're encouraged to only add your application specific fields to the `bdy` section.
+Hydra takes care of locating an instance of a microservice called `gameserver` and delivering the message. While the message is a pure JavaScript object, it does have a strict structure. The `to`, `frm` and `bdy` fields are required, and you're encouraged to only add your application specific fields to the `bdy` section.
 
 This message format actually has a name, [UMF](https://github.com/cjus/umf) - universal messaging format. UMF is a simple JavaScript object format that Hydra uses to define routable and queuable messages. But what exactly do we mean by that? A routable message is one that contains enough information for a program to determine who sent the message and where that message needs to go. We provide that information by supplying `to` and `frm` fields. A queuable message is one that can be stored for later processing. Useful message fields include the `mid` field which uniquely identifies a message. Other useful fields not shown here include fields which provide a timestamp, priority, and how long a message should be considered valid. So our messages are considered queuable because they contain enough information to allows us to use, build and manage message queues.
 
@@ -87,7 +87,7 @@ class HotPotatoPlayer {
 
 In the `constructor` we'll define our game's configuration settings. The `init` member will contain our initialization of Hydra and the definition of a message listener, where arriving messages are dispatched to our `messageHandler` function. In order to create a bit of realism, we use the `getRandomWait` helper function to randomly delay the passing of the hot potato.
 
-The player with the potato starts the game using the `startGame` function. When a player receives the potato it checks to see if the game timer has expired, if not, then it uses the `passHotPotato` function to send the potato to another player. If the game has expired then the `gameOver` function is called which in-turn sends out a broadcast message to all players - signaling the end of the game.
+The player with the potato starts the game using the `startGame` function. When a player receives the potato it checks to see if the game timer has expired, if not, then it uses the `passHotPotato` function to send the potato to another player. If the game has expired, then the `gameOver` function is called which in-turn sends out a broadcast message to all players - signaling the end of the game.
 
 #### constructor
 
@@ -372,7 +372,7 @@ Commands:
   services [serviceName]       - display list of services
 ```
 
-You might be wondering how the Hydra-cli program works. It's just a Node application which uses the Hydra NPM package to interact with Hydra enabled applications. It's not that different than the hpp application presented in this article. You can review the code on the [Hydra-cli Github repo](https://github.com/flywheelsports/hydra-cli).
+You might be wondering how the Hydra-cli program works. It's just a Node application which uses the Hydra NPM package to interact with Hydra enabled applications. It's not that different from the hpp application presented in this article. You can review the code on the [Hydra-cli Github repo](https://github.com/flywheelsports/hydra-cli).
 
 ## Summary
 
