@@ -3,6 +3,8 @@ Hydra Hot Potato Player (game)
 
 A variation on the children's classic game, [Hot Potato](https://en.wikipedia.org/wiki/Hot_potato_(game)). Adopted as a distributed computing example of network messaging using [Hydra](https://github.com/flywheelsports/fwsp-hydra).
 
+Read [Building a Microservices Example Game with Distributed Messaging](https://community.risingstack.com/building-a-microservices-example-game-with-distributed-messaging) on the RisingStack community site.
+
 ## Seeing this work
 
 There are a few ways you can see this project working.
